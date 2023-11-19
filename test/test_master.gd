@@ -32,13 +32,13 @@ $ This is the end of noting questions
 ~ 2 2 2
 - word
 
-&1 bogus
+&&1 bogus
 ~ w
 - o
 - r
 ~ ks
 
-&word
+&&word
 - A
 ~B
 -    C
@@ -68,14 +68,21 @@ func start_test_init(value: bool):
 	test_initialize = test_init()
 
 
-func start_load_test(value: bool) -> bool:
+func test_load() -> bool:
 	var dialogue_system: DialogueSystem = DialogueSystem.new()
 	var output: bool = true
 	
-	if dialogue_system._start_dialogue("test_dialogue") != false:
+	if dialogue_system._start_dialogue("test_dialogue") == false:
 		push_error("Cannot start test dialogue")
 		output = false
 	
 	dialogue_system.queue_free()
 	return output
 
+
+func start_load_test(value: bool):
+	test_load_func = test_load()
+
+
+func _ready():
+	start_load_test(true)

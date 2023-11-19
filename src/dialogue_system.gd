@@ -37,7 +37,7 @@ func _load_dialogue(dialogue_name: String):
 func _start_dialogue(dialogue_name: String) -> bool:
 	var file = _load_dialogue(dialogue_name)
 	if file != null:
-		# parse
+		_parse(file)
 		return true
 	else:
 		return false
@@ -57,6 +57,8 @@ func _parse(file: FileAccess):
 		var seeking_line_purpouse = true
 		var recording_alias = false
 		
+		var temp_text = ""
+		var is_from_player = false
 		
 		for c in line:
 			if c == '\n' or c == '\r':
@@ -66,6 +68,9 @@ func _parse(file: FileAccess):
 					if parse_line == PARSE_LINE.QuestionOutline:
 						alias = ""
 						question_text = ""
+				elif parse_line == PARSE_LINE.Line:
+					var output = [temp_text, is_from_player]
+					parsed_loaded_dialogue.add_line_to(question_text, alias, output)
 			
 			if seeking_line_purpouse:
 				if c == comment_char:
@@ -80,6 +85,10 @@ func _parse(file: FileAccess):
 						continue
 					parse_line = PARSE_LINE.QuestionOutline
 					continue
+				elif c == player_line_char or c == character_line_char:
+					is_from_player = (c == player_line_char)
+					parse_line = PARSE_LINE.Line
+					continue
 				else:
 					recording_alias = (c != ' ')
 					seeking_line_purpouse = false
@@ -90,11 +99,17 @@ func _parse(file: FileAccess):
 					continue
 				alias += c
 			else:
+				recording_alias = false
 				if parse_line == PARSE_LINE.QuestionOutline or parse_line == PARSE_LINE.QuestionBlock:
 					if question_text.is_empty():
 						if c == ' ' or c == '\t':
 							continue
 					question_text += c
+				elif parse_line == PARSE_LINE.Line:
+					if temp_text.is_empty():
+						if c == ' ' or c == '\t':
+							continue
+					temp_text += c
 
 enum PARSE_LINE
 {

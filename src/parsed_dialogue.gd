@@ -16,9 +16,9 @@ func create_new_dialogue(question: String, alias: String):
 		_aliases_dictionary[alias] = _lines_array.size()
 
 
-func add_answers_to(question: String, alias: String, lines: Array):
+func add_line_to(question: String, alias: String, line: Array):
 	var index: int = _get_index_for(question, alias)
-	_lines_array[index].append_array(lines)
+	_lines_array[index].append_array(line)
 
 
 func _get_index_for(question: String, alias: String):
