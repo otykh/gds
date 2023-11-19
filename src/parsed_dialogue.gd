@@ -28,10 +28,3 @@ func _get_index_for(question: String, alias: String):
 		for n in range(0, _questions_array.size()):
 			if _questions_array[n] == question:
 				return n
-
-
-func _TEMP_print_all_dialogues():
-	for i in range(0, _questions_array.size()):
-		print(_questions_array[i])
-		for j in range(0, _lines_array[i].size()):
-			print(_lines_array[i][j][0], " told by player?: ", _lines_array[i][j][1])
