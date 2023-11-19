@@ -38,83 +38,42 @@ func _start_dialogue(dialogue_name: String) -> bool:
 	var file = _load_dialogue(dialogue_name)
 	if file != null:
 		_parse(file)
+		file.close()
 		return true
 	else:
+		file.close()
 		return false
 
 
 func _parse(file: FileAccess):
-	var parse_line = PARSE_LINE.None
-	var remember_question_block: bool = false
-	var alias: String = ""
-	var question_text: String = ""
+	parsed_loaded_dialogue = ParsedDialogue.new()
 	
-	while(true):
+	var alias = ""
+	var question = ""
+		
+	while not file.eof_reached():
 		var line: String = file.get_line()
-		if line.is_empty():
-			break
+		if line.begins_with("$"):
+			continue
 		
-		var seeking_line_purpouse = true
-		var recording_alias = false
+		var output = line.split(" ", false, 1)
+		if output.size() == 0:
+			continue
 		
-		var temp_text = ""
-		var is_from_player = false
-		
-		for c in line:
-			if c == '\n' or c == '\r':
-				remember_question_block = parse_line == PARSE_LINE.QuestionBlock
-				if parse_line == PARSE_LINE.QuestionBlock or parse_line == PARSE_LINE.QuestionOutline:
-					parsed_loaded_dialogue.create_new_dialogue(question_text, alias)
-					if parse_line == PARSE_LINE.QuestionOutline:
-						alias = ""
-						question_text = ""
-				elif parse_line == PARSE_LINE.Line:
-					var output = [temp_text, is_from_player]
-					parsed_loaded_dialogue.add_line_to(question_text, alias, output)
-			
-			if seeking_line_purpouse:
-				if c == comment_char:
-					continue
-				
-				elif c == question_char:
-					if parse_line == PARSE_LINE.QuestionBlock:
-						push_error("Detected 3 or more '&' characters. Ignoring line: " + line)
-						break
-					if parse_line == PARSE_LINE.QuestionOutline:
-						parse_line = PARSE_LINE.QuestionBlock
-						continue
-					parse_line = PARSE_LINE.QuestionOutline
-					continue
-				elif c == player_line_char or c == character_line_char:
-					is_from_player = (c == player_line_char)
-					parse_line = PARSE_LINE.Line
-					continue
-				else:
-					recording_alias = (c != ' ')
-					seeking_line_purpouse = false
-			
-			if recording_alias:
-				if c == ' ':
-					recording_alias = false
-					continue
-				alias += c
+		if output[0].begins_with(question_char + question_char):
+			if output[0].length() > 2: # has alias
+				alias = output[0].substr(2)
 			else:
-				recording_alias = false
-				if parse_line == PARSE_LINE.QuestionOutline or parse_line == PARSE_LINE.QuestionBlock:
-					if question_text.is_empty():
-						if c == ' ' or c == '\t':
-							continue
-					question_text += c
-				elif parse_line == PARSE_LINE.Line:
-					if temp_text.is_empty():
-						if c == ' ' or c == '\t':
-							continue
-					temp_text += c
-
-enum PARSE_LINE
-{
-	None,
-	QuestionOutline,
-	QuestionBlock,
-	Line
-}
+				alias = ""
+			if output.size() > 1:
+				question = output[1]
+			else:
+				question = ""
+		elif output[0].begins_with(question_char):
+			if output[0].length() > 1: # has alias
+				alias = output[0].substr(1)
+			question = output[1]
+			parsed_loaded_dialogue.create_new_dialogue(question, alias)
+		elif output[0].begins_with(player_line_char) or output[0].begins_with(character_line_char):
+			parsed_loaded_dialogue.add_line_to(question, alias, [output[1], output[0] == player_line_char])
+		

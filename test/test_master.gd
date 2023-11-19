@@ -40,7 +40,7 @@ $ This is the end of noting questions
 
 &&word
 - A
-~B
+~ B
 -    C
 - D 	D"""
 
@@ -75,6 +75,8 @@ func test_load() -> bool:
 	if dialogue_system._start_dialogue("test_dialogue") == false:
 		push_error("Cannot start test dialogue")
 		output = false
+	else:
+		dialogue_system.parsed_loaded_dialogue._TEMP_print_all_dialogues() #TODO remove
 	
 	dialogue_system.queue_free()
 	return output
