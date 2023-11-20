@@ -7,18 +7,6 @@ const question_char = '&'
 const player_line_char = '-'
 const character_line_char = '~'
 
-
-# @TODO remove this
-"""
-_start_dialogue
-if started:
-	get_questions() # this will return Array of questions
-
-# somewhere in the process of when pressing the button
-asked_question(index or text)
-get_next_line() # this will print somewhere in the format [is_player:bool, text]
-"""
-
 var parsed_loaded_dialogue: ParsedDialogue
 
 # runtime:
@@ -30,6 +18,10 @@ func start_dialogue(dialogue_name: String) -> bool:
 	if file != null:
 		var success = _parse(file)
 		file.close()
+		if success:
+			success = parsed_loaded_dialogue.verify()
+		else:
+			push_error("Dialogue '%s' could not be parsed" % dialogue_name)
 		return success
 	else:
 		file.close()
@@ -76,7 +68,7 @@ func _parse(file: FileAccess):
 		if line.begins_with("$"):
 			continue
 		
-		var output = line.split(" ", false, 1)
+		var output = line.strip_edges(true, false).split(" ", false, 1)
 		if output.size() == 0:
 			continue
 		
@@ -94,8 +86,10 @@ func _parse(file: FileAccess):
 				alias = output[0].substr(1)
 			question = output[1]
 			parsed_loaded_dialogue.create_new_dialogue(question, alias)
-		elif output[0].begins_with(player_line_char) or output[0].begins_with(character_line_char):
-			parsed_loaded_dialogue.add_line_to(question, alias, [output[1], output[0] == player_line_char])
+		elif output[0] == player_line_char or output[0] == character_line_char:
+			var success = parsed_loaded_dialogue.add_line_to(question, alias, [output[1], output[0] == player_line_char])
+			if !success:
+				return false
 		else:
 			push_error("Identifier " + output[0] + " is not defined")
 			return false

@@ -2,10 +2,12 @@
 
 extends Node
 
+@export var test_all_func: bool = false: set = start_test_all
 @export var test_initialize: bool = false : set = start_test_init
 @export var test_load_func: bool = false : set = start_load_test
 @export var test_dialogue_func: bool = false: set = start_dialogue_test
 @export var test_bad_files_func: bool = false: set = start_bad_files_test
+@export var test_spacing_test_func: bool = false: set = start_spacing_test
 
 """
 NOTE: DO NOT FORGET TO SET FILTERS IN THE EXPORT FOLDER
@@ -115,23 +117,17 @@ const spacing_test: String = """$ testing spacing in dialogue
 
 && test
 - 1
-- 2
+			- 2
 ~ 3
+						
 
 ~ 4
-- 5
+	- 5
 ~ 6
 """
-
-# This is not neceserally an error, just something that system needs to report as warning when validating
-const only_player_talk: String = """$ file where the dialogue only the player talks
-& test
-
-&& test
-- 1
-- 2
-- 3
-"""
+const spacing_test_lines = [
+	["1", true], ["2", true], ["3", false], ["4", false], ["5", true], ["6", false]
+]
 
 func write_text_to_test_file(text: String):
 	var file = FileAccess.open("res://dialogues/test_dialogue.txt", FileAccess.WRITE_READ)
@@ -243,6 +239,49 @@ func test_bad_files():
 
 func start_bad_files_test(value: bool):
 	test_bad_files_func = test_bad_files()
+
+
+func test_spacing() -> bool:
+	#spacing_test
+	var dialogue_system: DialogueSystem = DialogueSystem.new()
+	var output: bool = true
+
+	write_text_to_test_file(spacing_test)
+	var success = dialogue_system.start_dialogue("test_dialogue")
+	if success:
+		dialogue_system.ask_question(0)
+		for line in spacing_test_lines:
+			var dline = dialogue_system.get_next_line()
+			if dline.size() == 0:
+				output = false
+				break
+			elif dline[0] != line[0] or dline[1] != line[1]:
+				output = false
+				break
+	else:
+		push_error("Spacing test failed to parse")
+		output = false
+	
+	dialogue_system.queue_free()
+	return output
+
+
+func start_spacing_test(value: bool):
+	test_spacing_test_func = test_spacing()
+
+
+func test_all() -> bool:
+	start_test_init(true)
+	start_load_test(true)
+	start_dialogue_test(true)
+	start_bad_files_test(true)
+	start_spacing_test(true)
+	
+	return test_initialize and test_load_func and test_dialogue_func and test_bad_files_func and test_spacing_test_func
+
+
+func start_test_all(value: bool):
+	test_all_func = test_all()
 
 
 func _ready():
